@@ -7,20 +7,8 @@ platform :ios do
 
   desc "Runs all the tests"
   lane :test do
-    # Start recording (Executes Apple Script)
-    sh("osascript ./recording_related/start_recording.scpt")
     scan
-    sh("cd .. && osascript ./fastlane/recording_related/stop_recording.scpt")
-    video_finished = true
   end
-
-  # error do |lane, exception|
-  #   # Save video even if the tests fail
-  #   if !video_finished
-  #     # Stop recording
-  #     sh("cd .. && osascript ./fastlane/recording_related/stop_recording.scpt")
-  #   end
-  # end
 
   desc "Ad-hoc build"
   lane :adhoc do
