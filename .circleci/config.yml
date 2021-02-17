@@ -8,7 +8,7 @@ jobs:
     working_directory: ~/demo-react-native
     docker:
       - image: cimg/node:12.16  # Convenience images optimized for build performance.
-    parallelism: 3  # Scale number of nodes for unit testing.
+    parallelism: 1  # Scale number of nodes for unit testing.
     steps:
       - checkout
       - restore_cache:  # Dependency caching minimizes setup times.
