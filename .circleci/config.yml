@@ -49,16 +49,19 @@ jobs:
     working_directory: ~/demo-react-native
     macos:
       xcode: 11.3.0
-    resource_class: large
     environment:
       FL_OUTPUT_DIR: output
       FASTLANE_LANE: test
 
     steps:
       - checkout
+      - run: for run in {1..5}; do osascript ./fastlane/recording_related/dismiss_warning.scpt; done # Dismisses the same named computer error which appears on CircleCI (Runs multiple times as the error appears multiple times sometimes)
+      # Pre-start Simulator
+      - run:
+          name: Pre-start simulator
+          command: xcrun instruments -w "iPhone 8 (12.0) [" || true
       - restore_cache:
           key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-
       - restore_cache:
           key: node-v1-{{ checksum "package.json" }}-{{ arch }}
 
@@ -106,10 +109,19 @@ jobs:
           working_directory: ios
 
       - store_artifacts:
-          path: test_output
+          path: ios/output
           
       - store_test_results:
-          path: test_output
+          path: ios/output
+
+      - store_artifacts:
+          path: ios/fastlane/test_output
+          
+      - store_test_results:
+          path: ios/fastlane/test_output
+
+      - store_artifacts:
+          path: ios
             
   android-build-and-test:
     working_directory: ~/demo-react-native/android
