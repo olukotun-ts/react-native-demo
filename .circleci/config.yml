@@ -105,10 +105,10 @@ jobs:
           working_directory: ios
 
       - store_artifacts:
-          path: output
+          path: test_output
           
       - store_test_results:
-          path: output/scan
+          path: test_output
             
   android-build-and-test:
     working_directory: ~/demo-react-native/android
