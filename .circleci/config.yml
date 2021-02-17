@@ -1,4 +1,8 @@
 version: 2.1
+
+orbs:
+   aws-s3: circleci/aws-s3@2.0.0
+
 jobs:
   node:
     working_directory: ~/demo-react-native
@@ -91,6 +95,10 @@ jobs:
           path: ios/fastlane/test_output
       - store_test_results:
           path: ios/fastlane/test_output
+      - persist_to_workspace:
+          root: ~/demo-react-native/ios
+          paths:
+            - output/buildlogs
             
   android-build-and-test:
     working_directory: ~/demo-react-native/android
@@ -119,6 +127,19 @@ jobs:
       - store_artifacts:
           path: test-results
 
+  deploy-artifacts:
+    working_directory: ~/demo-react-native
+    macos:
+      xcode: 11.3.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/demo-react-native
+      - aws-s3/sync:
+          from: ~/demo-react-native/ios/output/buildlogs
+          to: 's3://olukotun-demo/buildlogs'
+          overwrite: true
+
 workflows:
   node-android-ios:
     jobs:
@@ -129,4 +150,7 @@ workflows:
       - macos-build-and-test:
           requires:
             - node
+      - deploy-artifacts:
+          requires:
+            - macos-build-and-test
             
