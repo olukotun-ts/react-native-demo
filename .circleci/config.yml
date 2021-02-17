@@ -1,17 +1,17 @@
 version: 2.1
 
-orbs:
+orbs: # Reusable "modules" of config.
    aws-s3: circleci/aws-s3@2.0.0
 
 jobs:
-  node:
+  unit-tests:
     working_directory: ~/demo-react-native
     docker:
-      - image: cimg/node:12.16
-    parallelism: 3
+      - image: cimg/node:12.16  # Convenience images optimized for build performance.
+    parallelism: 3  # Scale number of nodes for unit testing.
     steps:
       - checkout
-      - restore_cache:
+      - restore_cache:  # Dependency caching minimizes setup times.
           key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
       - restore_cache:
           key: node-v1-{{ checksum "package.json" }}-{{ arch }}
@@ -31,22 +31,22 @@ jobs:
             yarn run test
           environment:
             JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
-      - persist_to_workspace:
+      - persist_to_workspace: # Caching build dependencies for future runs.
           root: ~/demo-react-native
           paths:
             - node_modules
-      - store_test_results:
+      - store_test_results: # Persisting testing results for test optimization.
           path: test-results
-      - store_artifacts:
+      - store_artifacts: # 5TB of storage for 30 days, free of charge.
           path: test-results
-      - aws-s3/sync:
+      - aws-s3/sync:  # Pre-written integration with cloud providers.
           from: ~/demo-react-native/test-results
           to: 's3://olukotun-demo/test-results'
 
   macos-build-and-test:
     working_directory: ~/demo-react-native
     macos:
-      xcode: 11.3.0
+      xcode: 11.3.0 # Supports 9.4.1 through 12.4.0
     environment:
       FL_OUTPUT_DIR: output
       FASTLANE_LANE: test
@@ -67,9 +67,6 @@ jobs:
             - node_modules
       - restore_cache:
           key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
-
-      #Pods directory is ignored to match default RN setup, but can also check them into source control
-      #https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
       - restore_cache:
           key: pods-v1-{{ checksum "ios/Podfile.lock" }}-{{ arch }}
       - run: 
@@ -98,14 +95,14 @@ jobs:
           path: ios/fastlane/test_output
       - store_test_results:
           path: ios/fastlane/test_output
-      - persist_to_workspace:
+      - persist_to_workspace: # Share directory for passing artifacts between jobs during the same run.
           root: ~/demo-react-native/ios
           paths:
             - output/buildlogs
             
   android-build-and-test:
     working_directory: ~/demo-react-native/android
-    docker:
+    docker: # Currently in beta: Android image with support for nested virtualization and x86 Android emulators.
       - image: circleci/android:api-29-node
     steps:
       - checkout:
@@ -144,13 +141,13 @@ jobs:
 workflows:
   node-android-ios:
     jobs:
-      - node
+      - unit-tests
       - android-build-and-test:
           requires:
-            - node
+            - unit-tests
       - macos-build-and-test:
           requires:
-            - node
+            - unit-tests
       - push-logs:
           requires:
             - macos-build-and-test
