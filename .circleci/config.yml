@@ -42,7 +42,6 @@ jobs:
       - aws-s3/sync:
           from: ~/demo-react-native/test-results
           to: 's3://olukotun-demo/test-results'
-          overwrite: true
 
   macos-build-and-test:
     working_directory: ~/demo-react-native
@@ -142,7 +141,6 @@ jobs:
       - aws-s3/sync:
           from: ~/demo-react-native/ios/output/buildlogs
           to: 's3://olukotun-demo/buildlogs'
-          overwrite: true
 
 workflows:
   node-android-ios:
