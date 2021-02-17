@@ -81,9 +81,7 @@ jobs:
             - ios/Pods
       - run:
           name: Fastlane
-          command: |
-            open /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app/ && xcrun simctl io booted recordVideo appVideo.mov
-            bundle exec fastlane $FASTLANE_LANE
+          command: bundle exec fastlane $FASTLANE_LANE
           working_directory: ios
       - store_artifacts:
           path: ios/output
