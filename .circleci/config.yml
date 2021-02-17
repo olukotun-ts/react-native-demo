@@ -8,7 +8,7 @@ jobs:
     working_directory: ~/demo-react-native
     docker:
       - image: cimg/node:12.16  # Convenience images optimized for build performance.
-    # parallelism: 4  # Scale number of nodes for unit testing.
+    parallelism: 4  # Scale number of nodes for unit testing.
     steps:
       - checkout
       - restore_cache:  # Dependency caching minimizes setup times.
@@ -45,6 +45,7 @@ jobs:
 
   macos-build-and-test:
     working_directory: ~/demo-react-native
+    resource_class: large # Scale CPU and RAM for e2e tests.
     macos:
       xcode: 11.3.0 # Supports 9.4.1 through 12.4.0
     environment:
