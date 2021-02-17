@@ -55,7 +55,6 @@ jobs:
 
     steps:
       - checkout
-      - run: for run in {1..5}; do osascript ./fastlane/recording_related/dismiss_warning.scpt; done # Dismisses the same named computer error which appears on CircleCI (Runs multiple times as the error appears multiple times sometimes)
       # Pre-start Simulator
       - run:
           name: Pre-start simulator
@@ -119,9 +118,6 @@ jobs:
           
       - store_test_results:
           path: ios/fastlane/test_output
-
-      - store_artifacts:
-          path: ios
             
   android-build-and-test:
     working_directory: ~/demo-react-native/android
