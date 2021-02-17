@@ -130,16 +130,15 @@ jobs:
       - store_artifacts:
           path: test-results
 
-  deploy-artifacts:
+  push-logs:
     working_directory: ~/demo-react-native
     macos:
       xcode: 11.3.0
     steps:
-      - checkout
       - attach_workspace:
           at: ~/demo-react-native
       - aws-s3/sync:
-          from: ~/demo-react-native/ios/output/buildlogs
+          from: ~/demo-react-native/output/buildlogs
           to: 's3://olukotun-demo/buildlogs'
 
 workflows:
@@ -152,7 +151,7 @@ workflows:
       - macos-build-and-test:
           requires:
             - node
-      - deploy-artifacts:
+      - push-logs:
           requires:
             - macos-build-and-test
             
