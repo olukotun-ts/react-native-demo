@@ -39,6 +39,10 @@ jobs:
           path: test-results
       - store_artifacts:
           path: test-results
+      - aws-s3/sync:
+          from: ~/demo-react-native/test-results
+          to: 's3://olukotun-demo/test-results'
+          overwrite: true
 
   macos-build-and-test:
     working_directory: ~/demo-react-native
