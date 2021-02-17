@@ -14,13 +14,13 @@ platform :ios do
     video_finished = true
   end
 
-  error do |lane, exception|
-    # Save video even if the tests fail
-    if !video_finished
-      # Stop recording
-      sh("cd .. && osascript ./fastlane/recording_related/stop_recording.scpt")
-    end
-  end
+  # error do |lane, exception|
+  #   # Save video even if the tests fail
+  #   if !video_finished
+  #     # Stop recording
+  #     sh("cd .. && osascript ./fastlane/recording_related/stop_recording.scpt")
+  #   end
+  # end
 
   desc "Ad-hoc build"
   lane :adhoc do
