@@ -5,7 +5,7 @@ import renderer from 'react-test-renderer';
 
 it('renders on init', () => {
   const rendered = renderer.create(<App />).toJSON();
-  expect(rendered).toBeTruthy();
+  expect(false).toBeTruthy();
 });
 
 it('renders on click', () => {
