@@ -3,12 +3,31 @@ version: 2.1
 orbs: # Reusable "modules" of config.
    aws-s3: circleci/aws-s3@2.0.0
 
+workflows: # Define multiple workflows within a pipeline.
+  node-android-ios:
+    jobs:
+      - unit-tests
+      - android-build-and-test:
+          requires:
+            - unit-tests
+      - macos-build-and-test:
+          requires:
+            - unit-tests
+      - push-logs:
+          requires:
+            - macos-build-and-test
+  demo_runner:
+    jobs:
+      - unity-runner
+      - unity-machine
+      - unity-docker
+            
 jobs:
   unit-tests:
     working_directory: ~/demo-react-native
     docker:
       - image: cimg/node:12.16  # Convenience images optimized for build performance.
-    parallelism: 4  # Scale number of nodes for unit testing.
+    parallelism: 4  # Scale number of parallel nodes for unit testing.
     steps:
       - checkout
       - restore_cache:  # Dependency caching minimizes setup times.
@@ -141,7 +160,7 @@ jobs:
 
   unity-runner:
     machine: true
-    resource_class: sandboxi/runner # Deployed on t2.xlarge
+    resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
     steps:
       - checkout
       - run: 
@@ -158,29 +177,9 @@ jobs:
   unity-docker:
     docker:
     - image: gableroux/unity3d:2018.2.6f1
-    resource_class: xlarge
+    resource_class: xlarge  # 8vCPUs + 16GB RAM
     steps:
       - checkout
       - run:
           name: Create activation file
           command: ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
-
-workflows:
-  node-android-ios:
-    jobs:
-      - unit-tests
-      - android-build-and-test:
-          requires:
-            - unit-tests
-      - macos-build-and-test:
-          requires:
-            - unit-tests
-      - push-logs:
-          requires:
-            - macos-build-and-test
-  demo_runner:
-    jobs:
-      - unity-runner
-      - unity-machine
-      - unity-docker
-            
