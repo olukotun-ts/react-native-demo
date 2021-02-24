@@ -139,6 +139,32 @@ jobs:
           from: ~/demo-react-native/output/buildlogs
           to: 's3://olukotun-demo/buildlogs'
 
+  unity-runner:
+    machine: true
+    resource_class: sandboxi/runner # Deployed on t2.xlarge
+    steps:
+      - checkout
+      - run: 
+          name: Create activation file
+          command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
+  unity-machine:
+    machine: true
+    resource_class: xlarge # 8vCPUs + 32GB RAM
+    steps:
+      - checkout
+      - run: 
+          name: Create activation file
+          command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
+  unity-docker:
+    docker:
+    - image: gableroux/unity3d:2018.2.6f1
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run:
+          name: Create activation file
+          command: ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
+
 workflows:
   node-android-ios:
     jobs:
@@ -152,4 +178,9 @@ workflows:
       - push-logs:
           requires:
             - macos-build-and-test
+  demo_runner:
+    jobs:
+      - unity-runner
+      - unity-machine
+      - unity-docker
             
