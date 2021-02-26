@@ -28,7 +28,7 @@ jobs:
       - run: ls -al
       - run:
           name: validates linting
-          command: docker run -v $CIRCLE_WORKING_DIRECTORY:/code gableroux/unity3d:2018.2.6f1 /bin/sh -c "cd /code; ls -alh"
+          command: sudo docker run -v $CIRCLE_WORKING_DIRECTORY:/code gableroux/unity3d:2018.2.6f1 /bin/sh -c "cd /code; ls -alh"
   lint:
     machine: true
     resource_class: sandboxi/runner
