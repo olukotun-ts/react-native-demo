@@ -1,9 +1,9 @@
 version: 2.1
 
-orbs: # Reusable "modules" of config.
+orbs:
    aws-s3: circleci/aws-s3@2.0.0
 
-workflows: # Define multiple workflows within a pipeline.
+workflows:
   verify_filesystem:
     jobs:
       - checkout
@@ -15,8 +15,7 @@ workflows: # Define multiple workflows within a pipeline.
 jobs:
   checkout:
     machine: true
-    resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
-    # parallelism: 4
+    resource_class: sandboxi/runner
     steps:
       - checkout
       - run: pwd
@@ -24,20 +23,21 @@ jobs:
       - run: 
           name: Create activation file
           command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
-      - persist_to_workspace: # Caching build dependencies for future runs.
+      - persist_to_workspace:
           root: ./
           paths:
             - android
       - run: ls -al
   lint:
     machine: true
-    resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
+    resource_class: sandboxi/runner
     steps:
+      - checkout
       - run: pwd
       - run: ls -al
   log:
     machine: true
-    resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
+    resource_class: sandboxi/runner
     steps:
       - run: pwd
       - run: ls -al
