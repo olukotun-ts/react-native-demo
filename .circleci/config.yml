@@ -16,15 +16,16 @@ jobs:
   checkout:
     machine: true
     resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
-    parallelism: 4
+    # parallelism: 4
     steps:
       - checkout
+      - run: pwd
       - run: ls -al
       - run: 
           name: Create activation file
           command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
       - persist_to_workspace: # Caching build dependencies for future runs.
-          root: ~/demo-react-native
+          root: ./
           paths:
             - android
       - run: ls -al
@@ -38,10 +39,11 @@ jobs:
     machine: true
     resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
     steps:
+      - run: pwd
       - run: ls -al
       - attach_workspace:
-          at: ~/demo-react-native
+          at: ./
       - run: ls -al
       - aws-s3/sync:
-          from: ~/demo-react-native/android
+          from: ./
           to: 's3://olukotun-demo/android'
