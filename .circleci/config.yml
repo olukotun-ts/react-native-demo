@@ -4,182 +4,44 @@ orbs: # Reusable "modules" of config.
    aws-s3: circleci/aws-s3@2.0.0
 
 workflows: # Define multiple workflows within a pipeline.
-  node-android-ios:
+  verify_filesystem:
     jobs:
-      - unit-tests
-      - android-build-and-test:
+      - checkout
+      - lint
+      - log
           requires:
-            - unit-tests
-      - macos-build-and-test:
-          requires:
-            - unit-tests
-      - push-logs:
-          requires:
-            - macos-build-and-test
-  demo_runner:
-    jobs:
-      - unity-runner
-      - unity-machine
-      - unity-docker
-            
+            - checkout
+
 jobs:
-  unit-tests:
-    working_directory: ~/demo-react-native
-    docker:
-      - image: cimg/node:12.16  # Convenience images optimized for build performance.
-    parallelism: 4  # Scale number of parallel nodes for unit testing.
+  checkout:
+    machine: true
+    resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
+    parallelism: 4
     steps:
       - checkout
-      - restore_cache:  # Dependency caching minimizes setup times.
-          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-      - restore_cache:
-          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-      - run: yarn install
-      - save_cache:
-          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-          paths:
-            - ~/.cache/yarn
-      - save_cache:
-          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-          paths:
-            - node_modules
-      - run:
-          name: jest tests
-          command: |
-            mkdir -p test-results/jest
-            yarn run test
-          environment:
-            JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
+      - run: ls -al
+      - run: 
+          name: Create activation file
+          command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
       - persist_to_workspace: # Caching build dependencies for future runs.
           root: ~/demo-react-native
           paths:
-            - node_modules
-      - store_test_results: # Persisting testing results for test optimization.
-          path: test-results
-      - store_artifacts: # 5TB of storage for 30 days, free of charge.
-          path: test-results
-      - aws-s3/sync:  # Pre-written integration with cloud providers.
-          from: ~/demo-react-native/test-results
-          to: 's3://olukotun-demo/test-results'
-
-  macos-build-and-test:
-    working_directory: ~/demo-react-native
-    resource_class: large # Scale CPU and RAM for e2e tests.
-    macos:
-      xcode: 11.3.0 # Supports 9.4.1 through 12.4.0
-    environment:
-      FL_OUTPUT_DIR: output
-      FASTLANE_LANE: test
-    steps:
-      - checkout
-      - restore_cache:
-          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-      - restore_cache:
-          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-      - run: yarn install
-      - save_cache:
-          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-          paths:
-            - ~/.cache/yarn
-      - save_cache:
-          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-          paths:
-            - node_modules
-      - restore_cache:
-          key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
-      - restore_cache:
-          key: pods-v1-{{ checksum "ios/Podfile.lock" }}-{{ arch }}
-      - run: 
-          command: pod install
-          working_directory: ios
-      - run: 
-          command: bundle install
-          working_directory: ios
-      - save_cache:
-          key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
-          paths:
-            - vendor/bundle
-      - save_cache:
-          key: pods-v1-{{ checksum "ios/Podfile.lock" }}-{{ arch }}
-          paths:
-            - ios/Pods
-      - run:
-          name: Fastlane
-          command: bundle exec fastlane $FASTLANE_LANE
-          working_directory: ios
-      - store_artifacts:
-          path: ios/output
-      - store_test_results:
-          path: ios/output
-      - store_artifacts:
-          path: ios/fastlane/test_output
-      - store_test_results:
-          path: ios/fastlane/test_output
-      - persist_to_workspace: # Share directory for passing artifacts between jobs during the same run.
-          root: ~/demo-react-native/ios
-          paths:
-            - output/buildlogs
-            
-  android-build-and-test:
-    working_directory: ~/demo-react-native/android
-    docker: # Currently in beta: Android image with support for nested virtualization and x86 Android emulators.
-      - image: circleci/android:api-29-node
-    steps:
-      - checkout:
-          path: ~/demo-react-native
-      - attach_workspace:
-          at: ~/demo-react-native
-      - restore_cache:
-          key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
-      - run: bundle install
-      - save_cache:
-          key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
-          paths:
-            - vendor/bundle
-      - run:
-          name: fastlane tests
-          command: |
-            mkdir -p test-results/fastlane
-            bundle exec fastlane test
-            mv fastlane/report.xml test-results/fastlane
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-
-  push-logs:
-    working_directory: ~/demo-react-native
-    macos:
-      xcode: 11.3.0
-    steps:
-      - attach_workspace:
-          at: ~/demo-react-native
-      - aws-s3/sync:
-          from: ~/demo-react-native/output/buildlogs
-          to: 's3://olukotun-demo/buildlogs'
-
-  unity-runner:
+            - android
+      - run: ls -al
+  lint:
     machine: true
     resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
     steps:
-      - checkout
-      - run: 
-          name: Create activation file
-          command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
-  unity-machine:
+      - run: pwd
+      - run: ls -al
+  log:
     machine: true
-    resource_class: xlarge # 8vCPUs + 32GB RAM
+    resource_class: sandboxi/runner # Deployed on a t2.xlarge instance (4vCPUs + 16GB RAM)
     steps:
-      - checkout
-      - run: 
-          name: Create activation file
-          command: sudo docker run gableroux/unity3d:2018.2.6f1 ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
-  unity-docker:
-    docker:
-    - image: gableroux/unity3d:2018.2.6f1
-    resource_class: xlarge  # 8vCPUs + 16GB RAM
-    steps:
-      - checkout
-      - run:
-          name: Create activation file
-          command: ./opt/Unity/Editor/Unity -quit -batchmode -nographics -logFile -createManualActivationFile || exit 0
+      - run: ls -al
+      - attach_workspace:
+          at: ~/demo-react-native
+      - run: ls -al
+      - aws-s3/sync:
+          from: ~/demo-react-native/android
+          to: 's3://olukotun-demo/android'
