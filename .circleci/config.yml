@@ -8,7 +8,7 @@ workflows: # Define multiple workflows within a pipeline.
     jobs:
       - checkout
       - lint
-      - log
+      - log:
           requires:
             - checkout
 
